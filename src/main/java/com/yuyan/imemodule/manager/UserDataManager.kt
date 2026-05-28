@@ -112,15 +112,19 @@ object UserDataManager {
         ZipInputStream(src).use { zipStream ->
             withTempDir { tempDir ->
                 zipStream.extract(tempDir)
-                val userdbDirs = tempDir.walkTopDown()
-                    .filter { it.isDirectory && it.name.endsWith(".userdb") }
-                    .toList()
-                if (userdbDirs.isEmpty()) {
-                    errorRuntime(R.string.exception_dictionary_empty)
-                }
                 val target = File(rimeDir, "pinyin.userdb")
                 if (target.exists()) target.deleteRecursively()
-                userdbDirs.first().copyRecursively(target)
+                // 优先查找 *.userdb 文件夹
+                val userdbDir = tempDir.walkTopDown()
+                    .firstOrNull { it.isDirectory && it.name.endsWith(".userdb") }
+                if (userdbDir != null) {
+                    userdbDir.copyRecursively(target)
+                } else if (File(tempDir, "CURRENT").exists()) {
+                    // zip 内容就是 userdb 内部文件（非文件夹形式压缩）
+                    tempDir.copyRecursively(target)
+                } else {
+                    errorRuntime(R.string.exception_dictionary_empty)
+                }
             }
         }
     }
