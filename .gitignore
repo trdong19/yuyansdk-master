@@ -1,0 +1,15 @@
+*.iml
+.gradle/
+local.properties
+.DS_Store
+captures/
+.externalNativeBuild
+.idea/
+/build/.transforms/
+/build/generated/
+/build/intermediates/
+/build/kotlin/
+/build/outputs/
+/build/tmp/
+/build/kspCaches/
+.claude
