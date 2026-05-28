@@ -1,10 +1,9 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
-    id 'kotlin-android'
     id 'com.google.devtools.ksp'
-    id 'kotlin-parcelize'
-    id 'kotlinx-serialization'
+    id 'org.jetbrains.kotlin.plugin.parcelize'
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 static def versionNameDate() {
     return new Date().format("yyyyMMdd.HH", TimeZone.getTimeZone("GMT+8"))
