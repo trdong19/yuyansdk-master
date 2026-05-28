@@ -38,7 +38,8 @@ class Launcher {
         ThreadPoolUtils.executeSingleton {
             // 复制词库文件
             val dataDictVersion = AppPrefs.getInstance().internal.dataDictVersion.getValue()
-            if (dataDictVersion < CustomConstant.CURRENT_RIME_DICT_DATA_VERSIOM) {
+            val buildDir = java.io.File(CustomConstant.RIME_DICT_PATH, "build")
+            if (dataDictVersion < CustomConstant.CURRENT_RIME_DICT_DATA_VERSIOM || !buildDir.exists() || buildDir.listFiles().isNullOrEmpty()) {
                 //rime词库
                 copyFileOrDir(context, "rime", "", CustomConstant.RIME_DICT_PATH, true)
                 copyFileOrDir(context, "hw", "", CustomConstant.HW_DICT_PATH, true)
