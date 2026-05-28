@@ -112,9 +112,10 @@ object UserDataManager {
         ZipInputStream(src).use { zipStream ->
             withTempDir { tempDir ->
                 zipStream.extract(tempDir)
-                val userdbDirs = tempDir.listFiles()
-                    ?.filter { it.isDirectory && it.name.endsWith(".userdb") }
-                if (userdbDirs.isNullOrEmpty()) {
+                val userdbDirs = tempDir.walkTopDown()
+                    .filter { it.isDirectory && it.name.endsWith(".userdb") }
+                    .toList()
+                if (userdbDirs.isEmpty()) {
                     errorRuntime(R.string.exception_dictionary_empty)
                 }
                 val target = File(rimeDir, "pinyin.userdb")
