@@ -30,9 +30,15 @@ object RimeEngine {
     private var charCase = 0x0000
 
     // 异步处理
-    private val rimeExecutor = Executors.newSingleThreadExecutor()
+    private var rimeExecutor = Executors.newSingleThreadExecutor()
     @Volatile private var debounceTask: Future<*>? = null
     @Volatile private var onCandidatesReady: (() -> Unit)? = null
+
+    private fun ensureExecutor() {
+        if (rimeExecutor.isShutdown) {
+            rimeExecutor = Executors.newSingleThreadExecutor()
+        }
+    }
 
     fun init() {
         Rime.getInstance(false)
@@ -61,6 +67,7 @@ object RimeEngine {
         val keyChar = if(keyCode == KeyEvent.KEYCODE_APOSTROPHE) if(isFinish()) '/'.code else '\''.code
             else event.unicodeChar
         val pushed = keyRecordStack.pushKey(event)
+        ensureExecutor()
         debounceTask?.cancel(false)
         onCandidatesReady = callback
         debounceTask = rimeExecutor.submit {
@@ -71,6 +78,7 @@ object RimeEngine {
     }
 
     fun onDeleteKey(callback: (() -> Unit)? = null) {
+        ensureExecutor()
         debounceTask?.cancel(false)
         onCandidatesReady = callback
         debounceTask = rimeExecutor.submit {
