@@ -15,6 +15,9 @@ import com.yuyan.inputmethod.util.LX17PinYinUtils
 import com.yuyan.inputmethod.util.QwertyPinYinUtils
 import com.yuyan.inputmethod.util.T9PinYinUtils
 import java.util.Locale
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 object RimeEngine {
     private val keyRecordStack = KeyRecordStack()
@@ -25,6 +28,12 @@ object RimeEngine {
     private var customPhraseSize: Int = 0 // 自定义引擎候选词长度
     const val MASK_CASE_LOWER = 0
     private var charCase = 0x0000
+
+    // 异步处理
+    private val rimeExecutor = Executors.newSingleThreadExecutor()
+    @Volatile private var debounceTask: Future<*>? = null
+    @Volatile private var onCandidatesReady: (() -> Unit)? = null
+
     fun init() {
         Rime.getInstance(false)
     }
@@ -47,20 +56,32 @@ object RimeEngine {
         return keyRecordStack.isEmpty()
     }
 
-    fun onNormalKey(event: KeyEvent) {
+    fun onNormalKey(event: KeyEvent, callback: (() -> Unit)? = null) {
         val keyCode = event.keyCode
         val keyChar = if(keyCode == KeyEvent.KEYCODE_APOSTROPHE) if(isFinish()) '/'.code else '\''.code
             else event.unicodeChar
-        if (keyRecordStack.pushKey(event))Rime.processKey(keyChar, event.action)
-        updateCandidatesOrCommitText()
+        val pushed = keyRecordStack.pushKey(event)
+        debounceTask?.cancel(false)
+        onCandidatesReady = callback
+        debounceTask = rimeExecutor.submit {
+            if (pushed) Rime.processKey(keyChar, event.action)
+            updateCandidatesOrCommitText()
+            onCandidatesReady?.invoke()
+        }
     }
 
-    fun onDeleteKey() {
-        processDelAction()
-        updateCandidatesOrCommitText()
+    fun onDeleteKey(callback: (() -> Unit)? = null) {
+        debounceTask?.cancel(false)
+        onCandidatesReady = callback
+        debounceTask = rimeExecutor.submit {
+            processDelAction()
+            updateCandidatesOrCommitText()
+            onCandidatesReady?.invoke()
+        }
     }
 
     fun selectCandidate(index: Int): String? {
+        cancelAsync()
         val indexReal = index - customPhraseSize
         Rime.selectCandidate(indexReal)
         keyRecordStack.pushCandidateSelectAction()
@@ -121,6 +142,8 @@ object RimeEngine {
     }
 
     fun reset() {
+        debounceTask?.cancel(false)
+        onCandidatesReady = null
         showCandidates = emptyList()
         pinyins = emptyArray()
         showComposition = ""
@@ -130,7 +153,15 @@ object RimeEngine {
         if(charCase == KeyEvent.META_SHIFT_ON) charCase = MASK_CASE_LOWER
     }
 
-    fun destroy() = Rime.destroy()
+    fun cancelAsync() {
+        debounceTask?.cancel(false)
+        onCandidatesReady = null
+    }
+
+    fun destroy() {
+        rimeExecutor.shutdownNow()
+        Rime.destroy()
+    }
 
     fun processDelAction() {
         when (val lastKey = keyRecordStack.pop()) {

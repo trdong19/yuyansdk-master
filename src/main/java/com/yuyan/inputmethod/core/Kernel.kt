@@ -19,8 +19,8 @@ object Kernel {
     }
 
     // 传入一个键码
-    fun inputKeyCode(event: KeyEvent) {
-        RimeEngine.onNormalKey(event)
+    fun inputKeyCode(event: KeyEvent, callback: (() -> Unit)? = null) {
+        RimeEngine.onNormalKey(event, callback)
     }
 
     // 是否输入完毕，等待上屏。
@@ -57,8 +57,8 @@ object Kernel {
         get() = RimeEngine.preCommitText
 
     // 删除操作
-    fun deleteAction() {
-        RimeEngine.onDeleteKey()
+    fun deleteAction(callback: (() -> Unit)? = null) {
+        RimeEngine.onDeleteKey(callback)
     }
 
     // 重置输入状态

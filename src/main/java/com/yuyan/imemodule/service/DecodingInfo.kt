@@ -42,11 +42,11 @@ object DecodingInfo {
         get() = candidatesLiveData.value?:emptyList()
 
     // 增加拼写字符
-    fun inputAction(event: KeyEvent) {
+    fun inputAction(event: KeyEvent, callback: (() -> Unit)? = null) {
         activeCandidate = 0
         activeCandidateBar = 0
-        Kernel.inputKeyCode(event)
         isAssociate = false
+        Kernel.inputKeyCode(event, callback)
     }
 
     /**
@@ -65,10 +65,10 @@ object DecodingInfo {
     /**
      * 删除
      */
-    fun deleteAction() {
+    fun deleteAction(callback: (() -> Unit)? = null) {
         activeCandidate = 0
         activeCandidateBar = 0
-        if(!isEngineFinish)Kernel.deleteAction()
+        if(!isEngineFinish) Kernel.deleteAction(callback)
         else reset()
     }
 
