@@ -471,13 +471,13 @@ class InputView(context: Context, private val service: ImeService) : LifecycleRe
                     service.getTextBeforeCursor(1).takeIf { it.isNotEmpty() }?.let { textBeforeCursors.push(it) }
                     sendKeyEvent(keyCode)
                 } else {
-                    DecodingInfo.deleteAction { updateCandidate() }
+                    DecodingInfo.deleteAction { handler.post { updateCandidate() } }
                 }
                 true
             }
             (Character.isLetterOrDigit(keyChar) && keyCode != KeyEvent.KEYCODE_0) || keyCode == KeyEvent.KEYCODE_APOSTROPHE || keyCode == KeyEvent.KEYCODE_SEMICOLON -> {
                 textBeforeCursors.clear()
-                DecodingInfo.inputAction(event) { updateCandidate() }
+                DecodingInfo.inputAction(event) { handler.post { updateCandidate() } }
                 true
             }
             keyCode != 0 -> {
