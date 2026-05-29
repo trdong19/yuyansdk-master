@@ -467,7 +467,7 @@ class InputView(context: Context, private val service: ImeService) : LifecycleRe
 
         // 有候选词时，数字键 1-9 选候选
         if (!DecodingInfo.isCandidatesEmpty && !DecodingInfo.isAssociate
-            && keyCode in KeyEvent.KEYCODE_1..KeyEvent.KEYCODE_9 && label.isDigitsOnly()) {
+            && keyCode in KeyEvent.KEYCODE_1..KeyEvent.KEYCODE_9 && label.length == 1 && Character.isDigit(label[0])) {
             chooseAndUpdate(label.toInt() - 1)
             return true
         }
