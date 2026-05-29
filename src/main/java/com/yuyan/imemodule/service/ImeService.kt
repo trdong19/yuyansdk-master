@@ -117,18 +117,29 @@ class ImeService : InputMethodService() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        // Ctrl+V 粘贴
+        if (event.isCtrlPressed && keyCode == KeyEvent.KEYCODE_V) {
+            currentInputConnection.performContextMenuAction(android.R.id.paste)
+            return true
+        }
         // 0 != event.getRepeatCount()  长按物理按键或 Ctrl&Meta的组合按键时，交由系统处理
-        return if (0 != event.repeatCount || event.isShiftPressed || event.isMetaPressed) super.onKeyDown(keyCode, event)
-        else if (isHardwareKeyboard) mCandidateView.processKeyDown(keyCode, event) || super.onKeyUp(keyCode, event)
-        else if (isWindowShown) mInputView.processKeyDown(keyCode, event) || super.onKeyUp(keyCode, event)
-        else super.onKeyDown(keyCode, event)
+        if (0 != event.repeatCount || event.isShiftPressed || event.isMetaPressed) return super.onKeyDown(keyCode, event)
+        val handled = if (isHardwareKeyboard) mCandidateView.processKeyDown(keyCode, event)
+            else if (isWindowShown) mInputView.processKeyDown(keyCode, event)
+            else false
+        return handled || super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        return if (0 != event.repeatCount || event.isShiftPressed || event.isMetaPressed) super.onKeyDown(keyCode, event)
-        else if (isHardwareKeyboard) mCandidateView.processKeyUp(event) || super.onKeyUp(keyCode, event)
-        else if (isWindowShown) mInputView.processKeyUp(event) || super.onKeyUp(keyCode, event)
-        else super.onKeyDown(keyCode, event)
+        // Ctrl 组合键交给系统处理
+        if (event.isCtrlPressed) return super.onKeyUp(keyCode, event)
+        if (0 != event.repeatCount || event.isShiftPressed || event.isMetaPressed) return super.onKeyUp(keyCode, event)
+        // keyDown 已处理的按键，keyUp 不再重复处理，避免 scrcpy 双重输入
+        val keyDownHandled = if (isHardwareKeyboard) mCandidateView.processKeyDown(keyCode, event)
+            else if (isWindowShown) mInputView.processKeyDown(keyCode, event)
+            else false
+        if (keyDownHandled) return true
+        return super.onKeyUp(keyCode, event)
     }
 
     override fun setInputView(view: View) {

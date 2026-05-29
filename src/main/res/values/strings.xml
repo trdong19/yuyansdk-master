@@ -15,6 +15,7 @@
     <string name="ime_settings_handwriting">手写设置</string>
     <string name="keypopup_input_settings">按键气泡</string>
     <string name="long_press_timeout">按键长按灵敏度</string>
+    <string name="input_debounce_delay">输入防抖延迟</string>
     <string name="keyboard_mnemonic_show">双拼提示</string>
     <string name="keyboard_double_input_key">双拼显示完整拼音</string>
     <string name="keyboard_flower_typeface">花漾字</string>

@@ -15,8 +15,10 @@ import com.yuyan.inputmethod.util.LX17PinYinUtils
 import com.yuyan.inputmethod.util.QwertyPinYinUtils
 import com.yuyan.inputmethod.util.T9PinYinUtils
 import java.util.Locale
+import com.yuyan.imemodule.prefs.AppPrefs
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 object RimeEngine {
@@ -30,14 +32,18 @@ object RimeEngine {
     private var charCase = 0x0000
 
     // 异步处理
-    private var rimeExecutor = Executors.newSingleThreadExecutor()
+    private var rimeExecutor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor() as ScheduledExecutorService
     @Volatile private var debounceTask: Future<*>? = null
     @Volatile private var onCandidatesReady: (() -> Unit)? = null
 
     private fun ensureExecutor() {
         if (rimeExecutor.isShutdown) {
-            rimeExecutor = Executors.newSingleThreadExecutor()
+            rimeExecutor = Executors.newSingleThreadScheduledExecutor() as ScheduledExecutorService
         }
+    }
+
+    private fun getDebounceDelay(): Long {
+        return AppPrefs.getInstance().keyboardSetting.inputDebounceDelay.getValue().toLong()
     }
 
     fun init() {
@@ -70,22 +76,22 @@ object RimeEngine {
         ensureExecutor()
         debounceTask?.cancel(false)
         onCandidatesReady = callback
-        debounceTask = rimeExecutor.submit {
+        debounceTask = rimeExecutor.schedule({
             if (pushed) Rime.processKey(keyChar, event.action)
             updateCandidatesOrCommitText()
             onCandidatesReady?.invoke()
-        }
+        }, getDebounceDelay(), TimeUnit.MILLISECONDS)
     }
 
     fun onDeleteKey(callback: (() -> Unit)? = null) {
         ensureExecutor()
         debounceTask?.cancel(false)
         onCandidatesReady = callback
-        debounceTask = rimeExecutor.submit {
+        debounceTask = rimeExecutor.schedule({
             processDelAction()
             updateCandidatesOrCommitText()
             onCandidatesReady?.invoke()
-        }
+        }, getDebounceDelay(), TimeUnit.MILLISECONDS)
     }
 
     fun selectCandidate(index: Int): String? {

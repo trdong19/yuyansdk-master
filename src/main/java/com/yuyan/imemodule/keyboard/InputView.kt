@@ -465,6 +465,13 @@ class InputView(context: Context, private val service: ImeService) : LifecycleRe
         val keyChar = event.unicodeChar
         val label = keyChar.toChar().toString()
 
+        // 有候选词时，数字键 1-9 选候选
+        if (!DecodingInfo.isCandidatesEmpty && !DecodingInfo.isAssociate
+            && keyCode in KeyEvent.KEYCODE_1..KeyEvent.KEYCODE_9 && label.isDigitsOnly()) {
+            chooseAndUpdate(label.toInt() - 1)
+            return true
+        }
+
         return when {
             keyCode == KeyEvent.KEYCODE_DEL -> {
                 if (DecodingInfo.isCandidatesEmpty || DecodingInfo.isAssociate) {

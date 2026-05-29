@@ -140,6 +140,16 @@ class AppPrefs(private val sharedPreferences: SharedPreferences) {
             defaultLabel = R.string.number_400_ms
         )
 
+        val inputDebounceDelay = int(
+            R.string.input_debounce_delay,
+            "input_debounce_delay",
+            150,
+            50,
+            300,
+            "毫秒",
+            50
+        )
+
 
         val abcNumberLine = switch(R.string.engish_full_keyboard, "keyboard_abc_number_line_enable", false)
 
